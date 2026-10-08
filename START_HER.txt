@@ -1,0 +1,17 @@
+HACKERANGREPET 3D – OPPDATERT HUD V2
+===================================
+
+1. Pakk ut ZIP-filen.
+2. Åpne mappen Hackerangrepet_Godot_3D_HUD_V2.
+3. Dobbeltklikk bygg.bat.
+
+NB: Ikke bruk bygg.bat fra gamle .NET/Blazor-mapper.
+
+KONTROLLER:
+WASD: gaa   |   Shift: loep
+Hoyre museknapp: se deg rundt
+Klikk / E: undersoek terminal
+Tab: aapne oppgaven
+H: hint   |   Esc: lukk vindu
+
+SVARENE ligger naa i egne vinduer, og dekker ikke 3D-rommet hele tiden.

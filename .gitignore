@@ -1,0 +1,19 @@
+# Godot import/cache (machine-generated)
+.godot/
+.import/
+
+# Windows builds and export products
+/build/
+/dist/
+*.exe
+*.pck
+*.zip
+Godot_v*.exe
+Godot-portable.zip
+
+# Editor + system leftovers
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+.vscode/

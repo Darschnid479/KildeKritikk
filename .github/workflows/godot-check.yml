@@ -1,0 +1,23 @@
+name: Godot – prosjektkontroll
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  import-and-parse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hent kildekode
+        uses: actions/checkout@v4
+      - name: Installer Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.5.1
+          use-dotnet: false
+          include-templates: false
+      - name: Importer prosjektet og finn parsefeil
+        run: godot --headless --path . --import
+      - name: Start hovedscenen i headless test
+        run: godot --headless --path . --quit-after 30
