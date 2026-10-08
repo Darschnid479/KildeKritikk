@@ -4,7 +4,7 @@
 
 # HACKERANGREPET // SOURCE CHECK
 
-**Et norsk 3D-escape room om kildekritikk.** Undersøk nyhetene, vurder bevis og avslør en video som er delt med feil forklaring – før nedtellingen når null.
+**Et norsk 3D-escape room om kildekritikk, utforskning og sikkerhetsdroner.** Undersøk nyhetene, vurder bevis og avslør en video som er delt med feil forklaring – før nedtellingen når null.
 
 ![Godot 4](https://img.shields.io/badge/Godot-4.5+-478CBF?logo=godotengine&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows-2478C7?logo=windows11&logoColor=white)
@@ -28,7 +28,7 @@ Klokken er **23:47**. Et fiktivt nyhetssystem er kompromittert. Du har **15 minu
 
 <div align="center">
 <img src="docs/design/gameplay-concept.svg" alt="Tydelig merket designillustrasjon av forventet 3D-HUD" width="96%" />
-<br /><sub><strong>Designillustrasjon, ikke et opptak fra spillet.</strong> Ekte skjermbilder legges inn etter testing av HUD V2.</sub>
+<br /><sub><strong>Designillustrasjon, ikke et opptak fra spillet.</strong> Ekte skjermbilder legges inn etter testing av V3.</sub>
 </div>
 
 ## Kom i gang (Windows)
@@ -42,11 +42,21 @@ Alternativ: åpne `project.godot` i Godot og trykk **F6/F5** (kjør prosjektet m
 
 **Merk:** Godots eksportmaler trengs for å lage en frittstående `.exe`. For selve spillingen i editoren er de ikke nødvendige.
 
+## Utforskning og farer (versjon 0.3)
+
+- **Større 3D-baner**: Alle tre rommene er utvidet, med tre terminaler spredt utover, servere og hindringer. Du må lete etter sporene.
+- **Sikkerhetsdroner**: Én patruljerer i rom 1 og to i rom 2 og 3. Kommer du for nær, jager de deg og angriper med energipulser.
+- **Skjold**: Start med 100 %. Angrep reduserer skjoldet. Når det går tomt, sendes du til inngangen og mister 12 sekunder, men beholder funnene. Et diskret tekstfelt viser avstanden til nærmeste uleste spor.
+- **Rettferdig spill**: Du kan gjemme deg bak kasser for å bryte dronenes sikt. Dronene stanser mens du leser et dokument eller løser en gåte. Skjoldet regenereres når du ikke er oppdaget. Ingen grafisk vold.
+- **Læringsmålene er fortsatt de samme**: Finn kilden, vurder bevisene og avslør feil kontekst.
+
+**Status:** Prototype. GitHub Actions kontrollerer import og oppstart; test også på Windows før du regner det som ferdig.
+
 ## Kontroller
 
 | Handling | Kontroll |
 | --- | --- |
-| Gå / løpe | `W A S D` / hold `Shift` |
+| Gå / løpe | `W A S D` / hold `Shift` for å løpe fra droner |
 | Se rundt | Hold høyre museknapp |
 | Undersøk en 3D-terminal | `E` i nærheten eller venstreklikk |
 | Åpne gåte | `Tab` |
@@ -61,7 +71,7 @@ Alternativ: åpne `project.godot` i Godot og trykk **F6/F5** (kjør prosjektet m
 - [Prosjektgrafikk / banner](docs/design/hackerangrepet-banner.svg).
 - [Skjermbildefotografering](docs/screenshots/README.md) – trykk `F12` mens spillet kjører, `F10` for å åpne mappen.
 
-Når V2 er testet, legger vi inn **ekte** skjermbilder av 3D-rommet, en terminal og tidslinjen. Inntil da brukes ingen konstruerte bilder som falske «screenshots».
+Når V3 er testet, legger vi inn **ekte** skjermbilder av 3D-rommet, en terminal og tidslinjen. Inntil da brukes ingen konstruerte bilder som falske «screenshots».
 
 ## Utvikling
 
@@ -70,6 +80,7 @@ Projektet er bygget i **Godot / GDScript**. 3D-omgivelsene lages ved oppstart fr
 - **Hovedscene:** `scenes/Main.tscn`
 - **Spill og brukergrensesnitt:** `scripts/main.gd`
 - **3D-laboratorium:** `scripts/cyber_world.gd`
+- **Fiende-AI:** `scripts/security_drone.gd`
 - **Lyd og ikon:** `assets/`
 - **Tester, oppgaver og skjermbilder:** `docs/`
 

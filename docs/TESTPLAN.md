@@ -16,3 +16,18 @@ Fyll inn resultatene etter kjøring i Godot på Windows. Status er **ikke testet
 | T10 | Prøv F12 og F10 | PNG lagres og bildemappe åpnes | Ikke testet |
 | T11 | Spill på 1280×720 | HUD overlapper ikke 3D-interaksjon | Ikke testet |
 | T12 | Bruk knappene i dialoger | Tekst og knapper er fullt synlige | Ikke testet |
+
+## V3 – utvidet bane og droner
+
+- [ ] Spilleren starter innenfor den nye banen og kan gå til alle tre terminalene.
+- [ ] Dekningskasser hindrer gjennomgang, men blokkerer ikke fremdrift.
+- [ ] En drone oppdager, jager og angriper når spilleren kommer nær.
+- [ ] Skjoldet synker ved treff og regenererer utenfor deteksjon.
+- [ ] Ved tomt skjold: retur til inngang, minus 12 sekunder, innsamlede spor beholdes.
+- [ ] Droner står stille mens lesefelt eller oppgavevindu er åpent.
+- [ ] Rom 2 og 3 har to droner, men alle gåter kan fullføres.
+- [ ] Test på Windows med F12-skjermbilder før de publiseres på GitHub.
+
+- [ ] Søk etter spor på forskjellige steder og sjekk kompakt avstandshint.
+- [ ] Kasser sperrer veien og skjuler spilleren for dronenes deteksjon.
+- [ ] Klikk på en terminal langt unna: vis beskjed, ikke åpne dokumentet.

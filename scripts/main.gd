@@ -54,6 +54,8 @@ var ui_root: Control
 var modal_layer: Control
 var top_timer: Label
 var top_room: Label
+var shield_label: Label
+var alert_label: Label
 var side_content: VBoxContainer
 var bottom_content: VBoxContainer
 var mission_prompt: Label
@@ -78,6 +80,11 @@ var timeline_solved: bool = false
 var status_text: String = "SYSTEM ONLINE  //  VENTER PÅ AGENT"
 var cursor_terminal: int = -1
 var elapsed: float = 0.0
+var tracker_clock: float = 0.0
+var shield: float = 100.0
+var hit_immunity: float = 0.0
+const SPAWN: Vector3 = Vector3(0.0, 0.0, 17.5)
+
 
 func _ready() -> void:
     _create_player()
@@ -93,7 +100,7 @@ func _ready() -> void:
 func _create_player() -> void:
     player = Node3D.new()
     player.name = "DigitalInvestigator"
-    player.position = Vector3(0, 0, 4.5)
+    player.position = SPAWN
     add_child(player)
     cam = Camera3D.new()
     cam.name = "Eyes"
@@ -134,8 +141,29 @@ func _process(delta: float) -> void:
             top_timer.add_theme_color_override("font_color", RED if time_left < 180 else CYAN)
         if time_left <= 0.0:
             _game_over()
-    if started and not finished and not transition_in_progress and not is_instance_valid(modal_layer):
+    hit_immunity = maxf(0.0, hit_immunity - delta)
+    var active_security: bool = started and not finished and not transition_in_progress and not is_instance_valid(modal_layer)
+    if active_security:
         _move_player(delta)
+        tracker_clock += delta
+        if tracker_clock > 0.35:
+            tracker_clock = 0.0
+            _update_spor_indicator()
+        var security: Dictionary = world.update_security(delta, player.global_position, true)
+        if bool(security["spotted"]):
+            alert_label.text = "● OPPDAGET AV DRONE"
+            alert_label.add_theme_color_override("font_color", RED)
+        else:
+            alert_label.text = "● SIGNAL SKJULT"
+            alert_label.add_theme_color_override("font_color", GREEN)
+            shield = minf(100.0, shield + delta * 5.0)
+        if int(security["strikes"]) > 0 and hit_immunity <= 0.0:
+            _drone_strike()
+        shield_label.text = "SKJOLD %d %%" % int(ceilf(shield))
+        shield_label.add_theme_color_override("font_color", RED if shield < 35.0 else GREEN)
+    else:
+        world.update_security(delta, player.global_position, false)
+    if active_security:
         if int(elapsed * 5.0) % 2 == 0:
             var hover: int = world.pick_terminal(cam, get_viewport().get_mouse_position())
             if hover != cursor_terminal:
@@ -147,6 +175,23 @@ func _process(delta: float) -> void:
                 else:
                     Input.set_default_cursor_shape(Input.CURSOR_ARROW)
                     interaction_prompt.text = ""
+
+func _drone_strike() -> void:
+    hit_immunity = 1.3
+    shield = maxf(0.0, shield - 34.0)
+    _sound("res://assets/error.wav")
+    if shield <= 0.0:
+        # A chase is a temporary obstacle, not a second failure condition.
+        # Preserve collected evidence and the global 15-minute clock.
+        shield = 100.0
+        hit_immunity = 4.0
+        player.position = SPAWN
+        player.rotation = Vector3.ZERO
+        cam.rotation = Vector3.ZERO
+        time_left = maxf(0.0, time_left - 12.0)
+        _toast("DRONE FANT DEG! RETUR TIL START · -12 SEK · SPOR BEHOLDT", true)
+    else:
+        _toast("SIKKERHETSDRONE ANGRIPER! SKJOLD %d %%" % int(shield), true)
 
 func _move_player(delta: float) -> void:
     var motion := Vector3.ZERO
@@ -161,9 +206,13 @@ func _move_player(delta: float) -> void:
     motion.y = 0
     if motion.length() > 0.0:
         var speed: float = 8.0 if Input.is_key_pressed(KEY_SHIFT) else 4.2
-        player.position += motion.normalized() * speed * delta
-        player.position.x = clampf(player.position.x, -6.8, 6.8)
-        player.position.z = clampf(player.position.z, -1.6, 8.8)
+        var step: Vector3 = motion.normalized() * speed * minf(delta, 0.08)
+        var next_x := player.position + Vector3(step.x, 0, 0)
+        if world.can_walk(next_x):
+            player.position.x = next_x.x
+        var next_z := player.position + Vector3(0, 0, step.z)
+        if world.can_walk(next_z):
+            player.position.z = next_z.z
         cam.position.y = 2.2 + sin(elapsed * 10.0) * 0.025
     else:
         cam.position.y = lerpf(cam.position.y, 2.2, minf(delta * 7, 1.0))
@@ -189,7 +238,11 @@ func _unhandled_input(event: InputEvent) -> void:
     elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and not is_instance_valid(modal_layer):
         var clicked_index := world.pick_terminal(cam, event.position)
         if clicked_index >= 0:
-            _open_terminal(clicked_index)
+            var terminal_pos: Vector3 = world.terminal_areas[clicked_index].global_position
+            if player.global_position.distance_to(terminal_pos) <= 6.0:
+                _open_terminal(clicked_index)
+            else:
+                _toast("GÅ NÆRMERE TERMINALEN FOR Å LESE SPORET")
             get_viewport().set_input_as_handled()
     elif event is InputEventKey and event.pressed and not event.echo:
         if event.keycode == KEY_E and not is_instance_valid(modal_layer):
@@ -333,6 +386,26 @@ func _create_ui() -> void:
     top_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
     top_timer.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     timer_row.add_child(top_timer)
+    shield_label = _single_line_label("SKJOLD 100 %", 15, GREEN)
+    shield_label.anchor_left = 1.0
+    shield_label.anchor_right = 1.0
+    shield_label.offset_left = -186
+    shield_label.offset_right = -22
+    shield_label.offset_top = 91
+    shield_label.offset_bottom = 114
+    shield_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    shield_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    ui_root.add_child(shield_label)
+    alert_label = _single_line_label("● SIGNAL SKJULT", 13, GREEN)
+    alert_label.anchor_left = 0.5
+    alert_label.anchor_right = 0.5
+    alert_label.offset_left = -160
+    alert_label.offset_right = 160
+    alert_label.offset_top = 81
+    alert_label.offset_bottom = 104
+    alert_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    alert_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    ui_root.add_child(alert_label)
 
     sound_button = _button("LYD: PÅ", false)
     sound_button.add_theme_font_size_override("font_size", 12)
@@ -357,7 +430,7 @@ func _create_ui() -> void:
     var navlines := _vbox(3)
     navpad.add_child(navlines)
     navlines.add_child(_single_line_label("WASD GÅ   ·   HØYRE MUS SE", 11, MUTED))
-    navlines.add_child(_single_line_label("KLIKK/E UNDERSØK   ·   TAB OPPGAVE", 11, CYAN))
+    navlines.add_child(_single_line_label("E UNDERSØK · TAB OPPGAVE · SHIFT LØP", 11, CYAN))
 
     interaction_prompt = _single_line_label("", 13, CYAN)
     interaction_prompt.anchor_left = 0.5
@@ -417,11 +490,20 @@ func _draw_side() -> void:
     action_line.add_child(hint_button)
     _draw_bottom()
 
+func _update_spor_indicator() -> void:
+    if not is_instance_valid(mission_prompt):
+        return
+    var distance: float = world.closest_unread_distance(player.global_position, viewed[current_room - 1])
+    if distance < 0.0:
+        mission_prompt.text = "ALLE 3 SPOR FUNNET · ÅPNE OPPGAVE"
+    else:
+        mission_prompt.text = "NÆRMESTE ULESTE SPOR: %d M" % int(ceilf(distance))
+
 func _draw_bottom() -> void:
     if not is_instance_valid(mission_prompt):
         return
     if not started:
-        mission_prompt.text = "3 terminaler venter på deg."
+        mission_prompt.text = "Søk gjennom den større banen."
         mission_action.text = "START OPPDRAGET"
         mission_action.disabled = true
         return
@@ -569,8 +651,8 @@ func _show_intro() -> void:
     var host := _create_modal("23:47  //  INNBRUDD OPPDAGET", "KLASSIFISERT // NIVÅ 0  ·  SYSTEMET TRENGER DEG", RED)
     host.add_child(_label("H A C K E R A N G R E P E T", 38, CYAN))
     _modal_paragraph(host, "En hacker har brutt seg inn i et oppdiktet nyhetssystem. Falske og misvisende opplysninger sprer seg. Du er den siste digitale etterforskeren som kan stoppe angrepet.\n\nDu har 15 minutter og tre sikkerhetsrom. Finn den opprinnelige kilden, undersøk bevisene, og avslør en video som deles med feil forklaring.", 19)
-    host.add_child(_label("3 ROM     •     15 MINUTTER     •     ÉN SAMMENHENGENDE NEDTELLING", 15, MUTED))
-    host.add_child(_label("WASD: gå    |    Høyre museknapp: se rundt    |    Klikk/E: undersøk", 15, PURPLE))
+    host.add_child(_label("3 STØRRE ROM   •   SIKKERHETSDRONER   •   15 MINUTTER", 15, MUTED))
+    host.add_child(_label("WASD: gå  |  Shift: løp  |  Høyre mus: se  |  E: undersøk  |  Unngå sikkerhetsdronene", 15, PURPLE))
     var go := _button("▶  START OPPDRAGET", true)
     go.pressed.connect(_start_game)
     host.add_child(go)
@@ -580,6 +662,8 @@ func _start_game() -> void:
     started = true
     finished = false
     time_left = DURATION
+    shield = 100.0
+    hit_immunity = 3.0
     _close_modal()
     _draw_side()
     ambience_player.stream = load("res://assets/ambient.wav")
@@ -668,7 +752,9 @@ func _advance_room(next_room: int) -> void:
         current_room = next_room
         world.build_room(current_room)
         world.set_opened(viewed[current_room - 1])
-        player.position = Vector3(0, 0, 4.5)
+        player.position = SPAWN
+        shield = 100.0
+        hit_immunity = 3.0
         player.rotation = Vector3.ZERO
         cam.rotation = Vector3.ZERO
         top_room.text = "NIVÅ 0%d / 03   ·   %s" % [current_room, ROOM_NAMES[current_room - 1]]
@@ -811,12 +897,17 @@ func _restart() -> void:
     timeline_solved = false
     current_room = 1
     time_left = DURATION
+    shield = 100.0
+    hit_immunity = 0.0
+    tracker_clock = 0.0
+    if is_instance_valid(shield_label):
+        shield_label.text = "SKJOLD 100 %"
     started = false
     finished = false
     transition_in_progress = false
     cursor_terminal = -1
     interaction_prompt.text = ""
-    player.position = Vector3(0, 0, 4.5)
+    player.position = SPAWN
     player.rotation = Vector3.ZERO
     cam.rotation = Vector3.ZERO
     top_room.text = "NIVÅ 01 / 03   ·   SPOR / KILDE"

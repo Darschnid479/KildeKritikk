@@ -19,6 +19,10 @@ var alert_light: OmniLight3D
 var cleaned: bool = false
 var terminal_names: Array[String] = []
 var palette: Color = Color("3ce9f3")
+var drone_guards: Array[Node3D] = []
+var barriers: Array[Rect2] = []
+const DroneScript = preload("res://scripts/security_drone.gd")
+
 
 func _ready() -> void:
     set_process(true)
@@ -35,6 +39,8 @@ func build_room(which: int) -> void:
     terminal_status.clear()
     moving_lights.clear()
     floating_bits.clear()
+    drone_guards.clear()
+    barriers.clear()
     match which:
         1:
             palette = Color("39e9f3")
@@ -47,10 +53,12 @@ func build_room(which: int) -> void:
             terminal_names = ["VIDEOOPPTAK", "VIDEOARKIV", "HACKERMELDING"]
     _make_architecture()
     _make_servers()
+    _make_cover()
     _make_terminals()
     _make_portal()
     _make_holograms()
     _make_lighting()
+    _make_security_drones()
     if which == 3:
         _make_explosion()
 
@@ -109,37 +117,37 @@ func _text(parent: Node3D, value: String, pos: Vector3, size: int, color: Color,
     return t
 
 func _make_architecture() -> void:
+    # Expanded exploration map: 28 m wide and 48 m long. Terminals are far apart.
     var base := _mat(Color("101d30"))
     var metal := _mat(Color("1e3045"))
     var seam := _mat(Color("07121e"))
     var glow := _mat(palette.darkened(0.5), palette, 2.8)
-    _block(self, Vector3(19.8, 0.38, 24.0), Vector3(0, -0.25, -1.0), base)
-    _block(self, Vector3(19.8, 0.22, 24.0), Vector3(0, 9.0, -1.0), seam)
-    _block(self, Vector3(0.45, 9.2, 24.0), Vector3(-10, 4.3, -1.0), metal)
-    _block(self, Vector3(0.45, 9.2, 24.0), Vector3(10, 4.3, -1.0), metal)
-    _block(self, Vector3(20, 9.2, 0.35), Vector3(0, 4.3, -13.0), seam)
-    _block(self, Vector3(20, 9.2, 0.35), Vector3(0, 4.3, 11.0), base)
-    # Tall framework columns and a floor grid; these visibly define 3D space.
-    for x in [-9.65, -7.6, 7.6, 9.65]:
-        for z in [-11.0, -5.0, 1.0, 7.0]:
-            _block(self, Vector3(0.24, 8.8, 0.24), Vector3(x, 4.2, z), metal)
-            _block(self, Vector3(0.045, 8.2, 0.045), Vector3(x + 0.14, 4.2, z + 0.14), glow)
-    var line := _mat(Color("10202d"), palette.darkened(0.48), 0.75)
-    for ix in range(-18, 19):
-        var x: float = float(ix) * 0.55
-        _block(self, Vector3(0.012, 0.008, 22.2), Vector3(x, -0.052, -1), line)
-    for iz in range(-21, 21):
-        var z: float = float(iz) * 0.55 - 1.0
-        _block(self, Vector3(19, 0.008, 0.012), Vector3(0, -0.05, z), line)
-    # Luminous directional floor path.
+    _block(self, Vector3(28.0, 0.38, 49.0), Vector3(0, -0.25, -1.0), base)
+    _block(self, Vector3(28.0, 0.22, 49.0), Vector3(0, 9.0, -1.0), seam)
     for side in [-1, 1]:
-        _block(self, Vector3(0.09, 0.035, 17.5), Vector3(side * 2.6, 0.015, -0.5), glow)
-        _block(self, Vector3(0.08, 0.035, 17.5), Vector3(side * 8.1, 0.03, -0.5), glow)
-    for z in [-10.8, -8.0, -5.2, -2.4, 0.4, 3.2, 6.0]:
-        _block(self, Vector3(17.4, 0.12, 0.1), Vector3(0, 8.82, z), glow)
-    _text(self, "H A C K E R A N G R E P E T", Vector3(0, 7.24, -12.7), 78, palette, 1.35)
+        _block(self, Vector3(0.45, 9.2, 49.0), Vector3(float(side) * 14.0, 4.3, -1.0), metal)
+    _block(self, Vector3(28.0, 9.2, 0.35), Vector3(0, 4.3, -25.0), seam)
+    _block(self, Vector3(28.0, 9.2, 0.35), Vector3(0, 4.3, 23.0), base)
+    for x in [-13.6, -11.1, 11.1, 13.6]:
+        for z in [-21.0, -13.0, -5.0, 3.0, 11.0, 19.0]:
+            _block(self, Vector3(0.24, 8.8, 0.24), Vector3(x, 4.2, z), metal)
+            _block(self, Vector3(0.045, 8.2, 0.045), Vector3(x + 0.13, 4.2, z + 0.13), glow)
+    var line := _mat(Color("10202d"), palette.darkened(0.48), 0.75)
+    for ix in range(-25, 26):
+        _block(self, Vector3(0.012, 0.008, 46.0), Vector3(float(ix) * 0.54, -0.052, -1.0), line)
+    for iz in range(-45, 46):
+        _block(self, Vector3(27.2, 0.008, 0.012), Vector3(0, -0.05, float(iz) * 0.52 - 1.0), line)
+    for side in [-1, 1]:
+        _block(self, Vector3(0.08, 0.035, 41.0), Vector3(float(side) * 10.9, 0.015, -1.0), glow)
+    for z in [-21.0, -15.0, -9.0, -3.0, 3.0, 9.0, 15.0, 21.0]:
+        _block(self, Vector3(26.4, 0.10, 0.10), Vector3(0, 8.82, z), glow)
+    _text(self, "H A C K E R A N G R E P E T", Vector3(0, 7.24, -24.7), 78, palette, 1.35)
     var sub: String = ["01 // SPOR OPPHAVET", "02 // VURDER BEVISENE", "03 // AVSLØR KONTEKSTEN"][room_index - 1]
-    _text(self, sub, Vector3(0, 6.55, -12.69), 49, Color("9baec6"), 0.9)
+    _text(self, sub, Vector3(0, 6.55, -24.69), 49, Color("9baec6"), 0.9)
+    # Area signs nudge the player to explore instead of seeing every clue from spawn.
+    _text(self, "ARKIV / NORD", Vector3(0, 4.3, -18), 42, palette)
+    _text(self, "SERVERSAL / MIDTEN", Vector3(0, 4.3, -3), 42, palette)
+    _text(self, "ADGANG / SØR", Vector3(0, 4.3, 18), 42, palette)
 
 func _make_servers() -> void:
     var cabinet := _mat(Color("182737"))
@@ -147,9 +155,9 @@ func _make_servers() -> void:
     var cyan := _mat(Color("0b242a"), Color("3aebff"), 2.0)
     var red := _mat(Color("2c111b"), Color("ff5067"), 1.8)
     for side in [-1, 1]:
-        for zi in range(4):
-            var z: float = -9.7 + zi * 4.35
-            var x: float = float(side) * 8.65
+        for zi in range(5):
+            var z: float = -19.0 + zi * 9.0
+            var x: float = float(side) * 12.2
             _block(self, Vector3(1.45, 4.6, 2.05), Vector3(x, 2.35, z), cabinet)
             _block(self, Vector3(1.5, 0.09, 2.11), Vector3(x, 4.69, z), trim)
             _block(self, Vector3(1.42, 0.07, 2.12), Vector3(x, 0.13, z), trim)
@@ -160,6 +168,75 @@ func _make_servers() -> void:
                 _block(self, Vector3(0.035, 0.075, 0.18), Vector3(x - side * 0.74, y, z - 0.5), led_material)
                 _block(self, Vector3(0.035, 0.045, 0.55), Vector3(x - side * 0.74, y, z + 0.17), trim)
 
+func _make_cover() -> void:
+    var steel := _mat(Color("243a4d"))
+    var trim := _mat(Color("142635"), palette, 1.4)
+    # Obstacles force a zigzag route, but never fully block the arena.
+    var cover_data: Array[Vector3] = [
+        Vector3(-2.0, 0, 12.0), Vector3(4.0, 0, 5.0),
+        Vector3(-2.0, 0, -5.5), Vector3(3.0, 0, -12.5)
+    ]
+    for pos in cover_data:
+        _block(self, Vector3(3.2, 2.1, 1.8), Vector3(pos.x, 1.0, pos.z), steel)
+        _block(self, Vector3(3.25, 0.075, 1.82), Vector3(pos.x, 2.06, pos.z), trim)
+        # Top-down Rect2 on the x/z plane, slightly expanded for the player.
+        barriers.append(Rect2(pos.x - 1.85, pos.z - 1.16, 3.7, 2.32))
+
+func can_walk(pos: Vector3) -> bool:
+    if absf(pos.x) > 10.65 or pos.z < -21.7 or pos.z > 20.2:
+        return false
+    for wall in barriers:
+        if wall.has_point(Vector2(pos.x, pos.z)):
+            return false
+    return true
+
+func _make_security_drones() -> void:
+    # Security drones are fictional, non-graphic threats with pulse attacks.
+    var patrols: Array = [
+        [Vector3(-4.5, 2.2, 4.0), Vector3(4.5, 2.2, -1.5), Vector3(2.0, 2.2, -9.0), Vector3(-4.5, 2.2, -5.0)],
+        [Vector3(5.0, 2.2, -17.0), Vector3(-3.0, 2.2, -13.0), Vector3(-6.0, 2.2, -7.0)]
+    ]
+    var count: int = 1 if room_index == 1 else 2
+    for i in range(count):
+        var guard: Node3D = DroneScript.new()
+        add_child(guard)
+        guard.call("configure", patrols[i], Color("ff506f") if i == 0 else Color("e6a0ff"))
+        drone_guards.append(guard)
+
+func _clear_sight(observer: Vector3, target: Vector3) -> bool:
+    # A crate hides the player from a drone's sensor. This encourages exploration
+    # and taking cover without introducing a combat requirement to the lesson.
+    var begin := Vector2(observer.x, observer.z)
+    var end := Vector2(target.x, target.z)
+    for barrier in barriers:
+        for i in range(1, 15):
+            var sample := begin.lerp(end, float(i) / 15.0)
+            if barrier.has_point(sample):
+                return false
+    return true
+
+func closest_unread_distance(from_position: Vector3, seen: Array) -> float:
+    var closest: float = -1.0
+    for i in range(min(terminal_areas.size(), seen.size())):
+        if not bool(seen[i]):
+            var candidate: float = from_position.distance_to(terminal_areas[i].global_position)
+            if closest < 0.0 or candidate < closest:
+                closest = candidate
+    return closest
+
+func update_security(delta: float, player_pos: Vector3, active: bool) -> Dictionary:
+    var strikes: int = 0
+    var spotted: bool = false
+    for guard in drone_guards:
+        if is_instance_valid(guard):
+            var visible: bool = _clear_sight(guard.position, player_pos)
+            var result: Dictionary = guard.call("tick_guard", delta, player_pos, active, visible)
+            if result.get("struck", false):
+                strikes += 1
+            if result.get("spotted", false):
+                spotted = true
+    return {"strikes": strikes, "spotted": spotted}
+
 func _make_terminals() -> void:
     var outer := _mat(Color("0d1b2b"))
     var edge := _mat(Color("1e3448"))
@@ -167,7 +244,7 @@ func _make_terminals() -> void:
     var neon := _mat(palette.darkened(0.45), palette, 2.8)
     for i in range(3):
         var station := Node3D.new()
-        station.position = Vector3((i - 1) * 5.0, 0, -5.25)
+        station.position = [Vector3(-7.0, 0, -16.0), Vector3(7.0, 0, -2.0), Vector3(-5.0, 0, 9.0)][i]
         station.rotation.y = (i - 1) * -0.08
         add_child(station)
         _block(station, Vector3(3.7, 0.21, 1.6), Vector3(0, 1.08, 0.75), outer)
@@ -208,7 +285,7 @@ func _make_terminals() -> void:
 
 func _make_portal() -> void:
     portal = Node3D.new()
-    portal.position = Vector3(0, 3.5, -11.65)
+    portal.position = Vector3(0, 3.5, -23.65)
     add_child(portal)
     var ring := _mat(palette.darkened(0.35), palette, 2.5)
     var spokes := _mat(Color("153849"), palette.darkened(0.18), 1.2)
@@ -258,17 +335,17 @@ func _make_lighting() -> void:
     main_light.position = Vector3(0, 7.6, 2.0)
     main_light.light_color = Color("b1d7ff")
     main_light.light_energy = 1.45
-    main_light.omni_range = 17
+    main_light.omni_range = 26
     add_child(main_light)
     for side in [-1, 1]:
         var accent := OmniLight3D.new()
-        accent.position = Vector3(6.4 * side, 3.7, -5.0)
+        accent.position = Vector3(9.4 * side, 3.7, -8.0)
         accent.light_color = palette
         accent.light_energy = 2.6
         accent.omni_range = 12
         add_child(accent)
     alert_light = OmniLight3D.new()
-    alert_light.position = Vector3(0, 5.0, -9)
+    alert_light.position = Vector3(0, 5.0, -18)
     alert_light.light_color = Color("ff315a")
     alert_light.light_energy = 1.5
     alert_light.omni_range = 9
@@ -276,7 +353,7 @@ func _make_lighting() -> void:
 
 func _make_explosion() -> void:
     explosion = Node3D.new()
-    explosion.position = Vector3(0, 4.9, -11.1)
+    explosion.position = Vector3(0, 4.9, -23.1)
     add_child(explosion)
     var fire := _mat(Color(1.0, 0.42, 0.13, 0.64), Color("ff642f"), 3.5, true)
     explosion_core = _sphere(explosion, 0.9, Vector3.ZERO, fire)
