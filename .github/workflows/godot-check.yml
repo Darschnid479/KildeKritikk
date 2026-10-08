@@ -22,4 +22,4 @@ jobs:
       - name: Start hovedscenen i headless test
         run: godot --headless --path . --quit-after 30
       - name: Kontroller tre rom, sikkerhetsdroner og spor
-        run: godot --headless --path . --script res://tests/smoke.gd
+        run: timeout 120s godot --headless --path . --script res://tests/smoke.gd

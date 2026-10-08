@@ -19,7 +19,6 @@ func _run_checks() -> void:
     var world = WorldScript.new()
     root.add_child(world)
     world.build_room(1)
-    await process_frame
     _expect(world.terminal_areas.size() == 3, "Room 1 contains exactly three clues")
     _expect(world.drone_guards.size() == 1, "Room 1 includes one security drone")
     _expect(world.can_walk(Vector3(0.0, 0, 17.5)), "Spawn point is navigable")
@@ -30,11 +29,9 @@ func _run_checks() -> void:
     var result: Dictionary = world.update_security(0.1, Vector3(-4.5, 0, 4.0), true)
     _expect(bool(result.get("spotted", false)), "Drone detects a nearby visible player")
     world.build_room(2)
-    await process_frame
     _expect(world.terminal_areas.size() == 3, "Room 2 clues are preserved")
     _expect(world.drone_guards.size() == 2, "Room 2 includes two drones")
     world.build_room(3)
-    await process_frame
     _expect(world.terminal_areas.size() == 3, "Room 3 clues are preserved")
     _expect(world.drone_guards.size() == 2, "Room 3 includes two drones")
     if failed:
