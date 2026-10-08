@@ -17,7 +17,11 @@ jobs:
           version: 4.5.1
           use-dotnet: false
           include-templates: false
+      - name: Sjekk dronens GDScript direkte
+        run: godot --headless --path . --check-only --script res://scripts/security_drone.gd
       - name: Importer prosjektet og finn parsefeil
         run: godot --headless --path . --import
       - name: Start hovedscenen i headless test
         run: godot --headless --path . --quit-after 30
+      - name: Kontroller tre rom, sikkerhetsdroner og spor
+        run: timeout 120s godot --headless --path . --script res://tests/smoke.gd

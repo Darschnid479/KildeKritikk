@@ -12,3 +12,9 @@
 ### Kjent begrensning
 
 Full Godot-oppstart og Windows-eksport må verifiseres på en Windows-PC med Godot installert. Skjermbildene for V2 er ikke tatt ennå.
+
+## 0.3.0 – Utforskning og sikkerhetsdroner (prototype)
+- Større 3D-laboratorium med spredte bevis og flere skjulesteder.
+- Patruljerende og jagende sikkerhetsdroner i alle tre rommene.
+- Angrep med visuelle energipulser, skjold og mild tidstraff.
+- Tilpasset kompakt HUD; læringsoppgavene og 15-minuttersklokken beholdt.
