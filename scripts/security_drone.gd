@@ -109,7 +109,8 @@ func _pulse_animation() -> void:
     anim.set_parallel(true)
     anim.tween_property(pulse, "scale", Vector3.ONE * 2.25, 0.33)
     anim.tween_property(pulse, "transparency", 1.0, 0.33)
-    anim.chain().tween_callback(func() -> void:
-        if is_instance_valid(pulse):
-            pulse.visible = false
-    )
+    anim.chain().tween_callback(Callable(self, "_end_pulse"))
+
+func _end_pulse() -> void:
+    if is_instance_valid(pulse):
+        pulse.visible = false
